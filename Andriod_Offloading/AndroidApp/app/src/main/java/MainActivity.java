@@ -28,8 +28,8 @@ public class MainActivity extends AppCompatActivity implements BatteryReceiver.B
     private Uri selectedImageUri;
     private BatteryReceiver batteryReceiver;
 
-    // TODO: put your server IP/hostname here (no trailing slash)
-    private static final String SERVER_URL = "http://YOUR_SERVER_IP:5000";
+    // Updated with your local IP address
+    private static final String SERVER_URL = "http://10.113.16.223:5000";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
