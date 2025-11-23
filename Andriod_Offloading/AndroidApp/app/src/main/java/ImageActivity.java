@@ -112,18 +112,25 @@ public class ImageActivity extends AppCompatActivity implements BatteryReceiver.
             public void onResponse(Call call, Response response) throws IOException {
                 try (Response finalResponse = response) {
                     Log.d(TAG, "Connectivity test response code: " + finalResponse.code());
-                    
+
                     if (finalResponse.isSuccessful() && finalResponse.body() != null) {
                         String responseBody = finalResponse.body().string();
-                        Log.d(TAG, "Connectivity test successful: " + responseBody);
+
+                        // Copy the local variable to a final variable for the lambda
+                        final String finalResponseBody = responseBody;
+
+                        Log.d(TAG, "Connectivity test successful: " + finalResponseBody);
                         runOnUiThread(() -> {
                             Toast.makeText(ImageActivity.this, "✓ Server connection successful!", Toast.LENGTH_LONG).show();
                             testConnBtn.setEnabled(true);
                         });
                     } else {
                         Log.e(TAG, "Connectivity test failed with code: " + finalResponse.code());
+                        // Capture the response code for the lambda
+                        final int finalResponseCode = finalResponse.code();
+
                         runOnUiThread(() -> {
-                            Toast.makeText(ImageActivity.this, "Server responded with error: " + finalResponse.code(), Toast.LENGTH_LONG).show();
+                            Toast.makeText(ImageActivity.this, "Server responded with error: " + finalResponseCode, Toast.LENGTH_LONG).show();
                             testConnBtn.setEnabled(true);
                         });
                     }
@@ -154,22 +161,29 @@ public class ImageActivity extends AppCompatActivity implements BatteryReceiver.
             public void onResponse(Call call, Response response) throws IOException {
                 try (Response finalResponse = response) {
                     Log.d(TAG, "Server response code: " + finalResponse.code());
-                    
+
                     if (!finalResponse.isSuccessful()) {
                         String errorBody = "";
                         try {
                             if (finalResponse.body() != null) {
+                                // This assignment makes 'errorBody' NOT effectively final
                                 errorBody = finalResponse.body().string();
                             }
                         } catch (Exception e) {
                             Log.e(TAG, "Error reading error response body", e);
                         }
-                        
+
                         Log.e(TAG, "Server error: " + finalResponse.code() + " - " + errorBody);
+
+                        // FIX: Create a final copy of the local variable before using it in the lambda
+                        final String finalErrorBody = errorBody;
+                        final int finalResponseCode = finalResponse.code();
+
                         runOnUiThread(() -> {
-                            String errorMsg = "Server Error: " + finalResponse.code();
-                            if (!errorBody.isEmpty()) {
-                                errorMsg += " - " + errorBody;
+                            // Use the final copy here
+                            String errorMsg = "Server Error: " + finalResponseCode;
+                            if (!finalErrorBody.isEmpty()) {
+                                errorMsg += " - " + finalErrorBody;
                             }
                             Toast.makeText(ImageActivity.this, errorMsg, Toast.LENGTH_LONG).show();
                             offloadBtn.setEnabled(true);
@@ -181,10 +195,13 @@ public class ImageActivity extends AppCompatActivity implements BatteryReceiver.
                     if (finalResponse.body() != null) {
                         byte[] imageBytes = finalResponse.body().bytes();
                         Log.d(TAG, "Received processed image, size: " + imageBytes.length + " bytes");
-                        
+
+                        // Capture the byte array for use in the lambda
+                        final byte[] finalImageBytes = imageBytes;
+
                         runOnUiThread(() -> {
                             // Convert bytes to bitmap and display the processed image
-                            Bitmap processedBitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.length);
+                            Bitmap processedBitmap = BitmapFactory.decodeByteArray(finalImageBytes, 0, finalImageBytes.length);
                             if (processedBitmap != null) {
                                 imageView.setImageBitmap(processedBitmap);
                                 Toast.makeText(ImageActivity.this, "Image processed successfully!", Toast.LENGTH_LONG).show();
