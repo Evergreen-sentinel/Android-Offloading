@@ -32,7 +32,7 @@ public class ImageActivity extends AppCompatActivity implements BatteryReceiver.
     private Uri selectedImageUri;
     private BatteryReceiver batteryReceiver;
 
-    // TODO: Update with your local server IP address
+    // TODO: Update with your server endpoint URL (should end with /)
     private static final String SERVER_URL = "https://android-offloading.onrender.com/";
 
     @Override
@@ -99,9 +99,9 @@ public class ImageActivity extends AppCompatActivity implements BatteryReceiver.
         uploader.upload(this, uri, new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
-                e.printStackTrace();
+                Log.e(TAG, "Network request failed: " + e.getMessage(), e);
                 runOnUiThread(() -> {
-                    Toast.makeText(ImageActivity.this, "Offload failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                    Toast.makeText(ImageActivity.this, "Network Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
                     offloadBtn.setEnabled(true);
                 });
             }
@@ -109,23 +109,53 @@ public class ImageActivity extends AppCompatActivity implements BatteryReceiver.
             @Override
             public void onResponse(Call call, Response response) throws IOException {
                 try (Response finalResponse = response) {
+                    Log.d(TAG, "Server response code: " + finalResponse.code());
+                    
                     if (!finalResponse.isSuccessful()) {
-                        Log.e(TAG, "Server error: " + finalResponse.code());
+                        String errorBody = "";
+                        try {
+                            if (finalResponse.body() != null) {
+                                errorBody = finalResponse.body().string();
+                            }
+                        } catch (Exception e) {
+                            Log.e(TAG, "Error reading error response body", e);
+                        }
+                        
+                        Log.e(TAG, "Server error: " + finalResponse.code() + " - " + errorBody);
                         runOnUiThread(() -> {
-                            Toast.makeText(ImageActivity.this, "Server Error: " + finalResponse.code(), Toast.LENGTH_LONG).show();
+                            String errorMsg = "Server Error: " + finalResponse.code();
+                            if (!errorBody.isEmpty()) {
+                                errorMsg += " - " + errorBody;
+                            }
+                            Toast.makeText(ImageActivity.this, errorMsg, Toast.LENGTH_LONG).show();
                             offloadBtn.setEnabled(true);
                         });
                         return;
                     }
 
-                    // Handle success
-                    final String responseBody = finalResponse.body().string();
-                    Log.d(TAG, "Server response: " + responseBody);
-
-                    runOnUiThread(() -> {
-                        Toast.makeText(ImageActivity.this, "Offload Successful! Response: " + responseBody, Toast.LENGTH_LONG).show();
-                        offloadBtn.setEnabled(true);
-                    });
+                    // Handle successful response - server returns processed image as JPEG
+                    if (finalResponse.body() != null) {
+                        byte[] imageBytes = finalResponse.body().bytes();
+                        Log.d(TAG, "Received processed image, size: " + imageBytes.length + " bytes");
+                        
+                        runOnUiThread(() -> {
+                            // Convert bytes to bitmap and display the processed image
+                            Bitmap processedBitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.length);
+                            if (processedBitmap != null) {
+                                imageView.setImageBitmap(processedBitmap);
+                                Toast.makeText(ImageActivity.this, "Image processed successfully!", Toast.LENGTH_LONG).show();
+                            } else {
+                                Toast.makeText(ImageActivity.this, "Error: Could not decode processed image", Toast.LENGTH_LONG).show();
+                            }
+                            offloadBtn.setEnabled(true);
+                        });
+                    } else {
+                        Log.e(TAG, "Response body is null");
+                        runOnUiThread(() -> {
+                            Toast.makeText(ImageActivity.this, "Error: Empty response from server", Toast.LENGTH_LONG).show();
+                            offloadBtn.setEnabled(true);
+                        });
+                    }
                 }
             }
         });

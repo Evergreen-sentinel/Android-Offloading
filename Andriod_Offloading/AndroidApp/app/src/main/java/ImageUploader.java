@@ -12,6 +12,9 @@ import okhttp3.MultipartBody;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
+import okio.BufferedSink;
+import okio.Okio;
+import okio.Source;
 
 public class ImageUploader {
     public interface UploadCallback {
@@ -36,6 +39,8 @@ public class ImageUploader {
      */
     // CRITICAL: This signature must match the call in ImageActivity.java
     public void upload(Context context, Uri fileUri, Callback callback) {
+        Log.d(TAG, "Starting upload to: " + serverUrl + "upload");
+        
         try {
             // Get the InputStream from the file Uri
             InputStream inputStream = context.getContentResolver().openInputStream(fileUri);
@@ -43,6 +48,8 @@ public class ImageUploader {
                 // If stream is null, report failure immediately
                 throw new IOException("Could not open input stream for file.");
             }
+
+            Log.d(TAG, "Successfully opened input stream for file URI: " + fileUri);
 
             // Create a RequestBody from the InputStream
             // We use a custom RequestBody to stream the data
@@ -54,20 +61,25 @@ public class ImageUploader {
             // Build the Multipart request body
             MultipartBody multipartBody = new MultipartBody.Builder()
                     .setType(MultipartBody.FORM)
-                    .addFormDataPart("image_file", "image.jpg", requestBody) // 'image_file' must match the server's expected field name
+                    .addFormDataPart("file", "image.jpg", requestBody) // 'file' matches Flask server's expected field name
                     .build();
+
+            Log.d(TAG, "Built multipart request body with 'file' field");
 
             // Build the final HTTP POST request
             Request request = new Request.Builder()
-                    .url(serverUrl + "/upload_image") // Ensure your server route is correct
+                    .url(serverUrl + "upload") // Use the correct /upload endpoint
                     .post(multipartBody)
+                    .addHeader("User-Agent", "AndroidApp/1.0") // Optional: Add user agent for debugging
                     .build();
+
+            Log.d(TAG, "Sending POST request to: " + request.url());
 
             // Enqueue the call (runs on a background thread)
             client.newCall(request).enqueue(callback);
 
         } catch (IOException e) {
-            Log.e(TAG, "Error during file upload setup: " + e.getMessage());
+            Log.e(TAG, "Error during file upload setup: " + e.getMessage(), e);
             // Need to manually call failure since setup failed before enqueue
             callback.onFailure(null, e);
         }
@@ -90,8 +102,8 @@ public class ImageUploader {
         }
 
         @Override
-        public void writeTo(okio.BufferedSink sink) throws IOException {
-            try (okio.Source source = okio.Okio.source(inputStream)) {
+        public void writeTo(BufferedSink sink) throws IOException {
+            try (Source source = Okio.source(inputStream)) {
                 sink.writeAll(source);
             }
         }
