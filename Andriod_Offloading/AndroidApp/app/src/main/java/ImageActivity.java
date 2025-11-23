@@ -28,7 +28,7 @@ public class ImageActivity extends AppCompatActivity implements BatteryReceiver.
     private static final String TAG = "ImageActivity";
 
     private ImageView imageView;
-    private Button pickBtn, offloadBtn;
+    private Button pickBtn, offloadBtn, testConnBtn;
     private Uri selectedImageUri;
     private BatteryReceiver batteryReceiver;
 
@@ -43,6 +43,7 @@ public class ImageActivity extends AppCompatActivity implements BatteryReceiver.
         imageView = findViewById(R.id.resultImage);
         pickBtn = findViewById(R.id.pickBtn);
         offloadBtn = findViewById(R.id.offloadBtn);
+        testConnBtn = findViewById(R.id.testConnBtn);
 
         // --- 1. Setup Battery Monitoring ---
         batteryReceiver = new BatteryReceiver(this); // 'this' implements BatteryListener
@@ -53,7 +54,10 @@ public class ImageActivity extends AppCompatActivity implements BatteryReceiver.
         // --- 2. Setup Image Picker ---
         pickBtn.setOnClickListener(v -> openImagePicker());
 
-        // --- 3. Setup Manual Offload ---
+        // --- 3. Setup Connectivity Test ---
+        testConnBtn.setOnClickListener(v -> testServerConnectivity());
+
+        // --- 4. Setup Manual Offload ---
         offloadBtn.setOnClickListener(v -> {
             if (selectedImageUri != null) {
                 tryOffload(selectedImageUri);
@@ -86,6 +90,46 @@ public class ImageActivity extends AppCompatActivity implements BatteryReceiver.
                 Toast.makeText(this, "Error reading image file.", Toast.LENGTH_SHORT).show();
             }
         }
+    }
+
+    private void testServerConnectivity() {
+        Log.d(TAG, "Testing server connectivity...");
+        Toast.makeText(this, "Testing server connectivity...", Toast.LENGTH_SHORT).show();
+        testConnBtn.setEnabled(false);
+
+        ImageUploader uploader = new ImageUploader(SERVER_URL);
+        uploader.testConnectivity(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                Log.e(TAG, "Connectivity test failed: " + e.getMessage(), e);
+                runOnUiThread(() -> {
+                    Toast.makeText(ImageActivity.this, "Connection failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                    testConnBtn.setEnabled(true);
+                });
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                try (Response finalResponse = response) {
+                    Log.d(TAG, "Connectivity test response code: " + finalResponse.code());
+                    
+                    if (finalResponse.isSuccessful() && finalResponse.body() != null) {
+                        String responseBody = finalResponse.body().string();
+                        Log.d(TAG, "Connectivity test successful: " + responseBody);
+                        runOnUiThread(() -> {
+                            Toast.makeText(ImageActivity.this, "✓ Server connection successful!", Toast.LENGTH_LONG).show();
+                            testConnBtn.setEnabled(true);
+                        });
+                    } else {
+                        Log.e(TAG, "Connectivity test failed with code: " + finalResponse.code());
+                        runOnUiThread(() -> {
+                            Toast.makeText(ImageActivity.this, "Server responded with error: " + finalResponse.code(), Toast.LENGTH_LONG).show();
+                            testConnBtn.setEnabled(true);
+                        });
+                    }
+                }
+            }
+        });
     }
 
     // This method handles the actual HTTP networking with OkHttp

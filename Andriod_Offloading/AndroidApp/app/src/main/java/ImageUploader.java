@@ -27,8 +27,13 @@ public class ImageUploader {
     private final String serverUrl;
 
     public ImageUploader(String serverUrl) {
-        this.client = new OkHttpClient();
+        this.client = new OkHttpClient.Builder()
+                .connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+                .writeTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+                .readTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+                .build();
         this.serverUrl = serverUrl;
+        Log.d(TAG, "ImageUploader initialized with server URL: " + serverUrl);
     }
 
     /**
@@ -70,10 +75,13 @@ public class ImageUploader {
             Request request = new Request.Builder()
                     .url(serverUrl + "upload") // Use the correct /upload endpoint
                     .post(multipartBody)
-                    .addHeader("User-Agent", "AndroidApp/1.0") // Optional: Add user agent for debugging
+                    .addHeader("User-Agent", "AndroidApp/1.0")
+                    .addHeader("Accept", "image/jpeg")
+                    .addHeader("Connection", "close") // Help with connection management
                     .build();
 
             Log.d(TAG, "Sending POST request to: " + request.url());
+            Log.d(TAG, "Request headers: " + request.headers());
 
             // Enqueue the call (runs on a background thread)
             client.newCall(request).enqueue(callback);
@@ -83,6 +91,22 @@ public class ImageUploader {
             // Need to manually call failure since setup failed before enqueue
             callback.onFailure(null, e);
         }
+    }
+
+    /**
+     * Test connectivity to the server using the /ping endpoint
+     * @param callback The callback to handle the ping response
+     */
+    public void testConnectivity(Callback callback) {
+        Log.d(TAG, "Testing connectivity to: " + serverUrl + "ping");
+        
+        Request request = new Request.Builder()
+                .url(serverUrl + "ping")
+                .get()
+                .addHeader("User-Agent", "AndroidApp/1.0")
+                .build();
+                
+        client.newCall(request).enqueue(callback);
     }
 
     // You will need a simple wrapper class to handle the InputStream for OkHttp
