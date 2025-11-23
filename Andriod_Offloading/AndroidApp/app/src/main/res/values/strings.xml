@@ -1,4 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Android Offloader</string>
+    <string name="app_name">OffloaderApp</string>
+    <string name="title_image_activity">Image Processor</string>
+    <string name="title_video_activity">Video Tools</string>
+    <string name="button_select_image">Select Image</string>
+    <string name="button_offload">OFFLOAD &amp; PROCESS (Battery Check)</string>
+    <string name="button_test_conn">TEST SERVER CONNECTIVITY</string> 
+    <string name="image_description">Processed Image Result</string>
+    <string name="main_title">Select Offloading Task</string>
+    <string name="task_image_uploader">Image Processing Offload</string>
+    <string name="task_video_uploader">Video Uploading Offload</string>
+    <string name="task_video_editor">Video Editing Offload</string>
+    <string name="task_presentation_maker">Presentation Generation Offload</string>
 </resources>
