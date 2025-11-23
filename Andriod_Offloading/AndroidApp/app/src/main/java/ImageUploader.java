@@ -45,7 +45,7 @@ public class ImageUploader {
     // CRITICAL: This signature must match the call in ImageActivity.java
     public void upload(Context context, Uri fileUri, Callback callback) {
         Log.d(TAG, "Starting upload to: " + serverUrl + "upload");
-        
+
         try {
             // Get the InputStream from the file Uri
             InputStream inputStream = context.getContentResolver().openInputStream(fileUri);
@@ -99,13 +99,13 @@ public class ImageUploader {
      */
     public void testConnectivity(Callback callback) {
         Log.d(TAG, "Testing connectivity to: " + serverUrl + "ping");
-        
+
         Request request = new Request.Builder()
                 .url(serverUrl + "ping")
                 .get()
                 .addHeader("User-Agent", "AndroidApp/1.0")
                 .build();
-                
+
         client.newCall(request).enqueue(callback);
     }
 
