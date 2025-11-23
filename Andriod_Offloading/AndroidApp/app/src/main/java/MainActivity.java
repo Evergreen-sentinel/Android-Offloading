@@ -9,7 +9,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        
+
         // For simplicity, directly launch the ImageActivity
         // You can later add a dashboard layout with multiple options
         startActivity(new Intent(this, ImageActivity.class));
