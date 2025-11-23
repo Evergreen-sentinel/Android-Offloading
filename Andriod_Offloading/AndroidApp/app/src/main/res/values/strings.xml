@@ -5,7 +5,7 @@
     <string name="title_video_activity">Video Tools</string>
     <string name="button_select_image">Select Image</string>
     <string name="button_offload">OFFLOAD &amp; PROCESS (Battery Check)</string>
-    <string name="button_test_conn">TEST SERVER CONNECTIVITY</string> 
+    <string name="button_test_conn">TEST SERVER CONNECTIVITY</string>
     <string name="image_description">Processed Image Result</string>
     <string name="main_title">Select Offloading Task</string>
     <string name="task_image_uploader">Image Processing Offload</string>
