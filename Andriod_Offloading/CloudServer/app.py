@@ -1,6 +1,7 @@
 from flask import Flask, request, send_file, jsonify
 from PIL import Image
 import io
+import os
 
 app = Flask(__name__)
 
@@ -24,5 +25,7 @@ def upload():
     return send_file(buf, mimetype='image/jpeg')
 
 if __name__ == '__main__':
-    # for debug/prototype only
-    app.run(host='0.0.0.0', port=5000)
+    # Use PORT environment variable for production (Render) or default to 5000 for local development
+    port = int(os.environ.get('PORT', 5000))
+    # For debug/prototype only - use Gunicorn for production
+    app.run(host='0.0.0.0', port=port)

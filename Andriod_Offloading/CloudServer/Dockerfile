@@ -10,7 +10,9 @@ COPY requirements.txt /app
 # install deps
 RUN pip install --no-cache-dir -r requirements.txt
 
-EXPOSE 5000
+# Use PORT environment variable or default to 5000
+ENV PORT=5000
+EXPOSE $PORT
 
-# For quick prototyping we use Flask's built-in server; replace with gunicorn for production
-CMD ["python", "app.py"]
+# Use Gunicorn for production
+CMD gunicorn --bind 0.0.0.0:$PORT app:app
